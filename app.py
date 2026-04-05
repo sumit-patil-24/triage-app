@@ -1,40 +1,93 @@
 from flask import Flask, render_template, request, redirect, url_for
 import joblib
 import os
+import smtplib
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
-# Load model safely
+# ==============================
+# LOAD ML MODEL
+# ==============================
 MODEL_PATH = "triage_model.joblib"
 
 if not os.path.exists(MODEL_PATH):
-    raise Exception("❌ Model file not found. Run train_model.py first.")
+    raise Exception("❌ Model not found. Run train_model.py first.")
 
 model = joblib.load(MODEL_PATH)
 
+# ==============================
+# MEMORY STORAGE
+# ==============================
 patients = []
-
 priority_order = {"RED": 1, "YELLOW": 2, "GREEN": 3}
 
-# ML prediction
+# ==============================
+# EMAIL ALERT FUNCTION
+# ==============================
+def send_email_alert(patient):
+    sender_email = "sumit425412@gmail.com"
+    sender_password = os.getenv('EMAIL_PASSWORD')
+    receiver_email = "patil04sumit@gmail.com"
+
+    subject = "🚨 URGENT: RED Patient Alert"
+
+    body = f"""
+    🚨 HIGH PRIORITY PATIENT DETECTED
+
+    Name: {patient['name']}
+    Age: {patient['age']}
+    Triage: {patient['triage']}
+
+    Immediate medical attention required.
+    """
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+        print("✅ Email sent successfully")
+    except Exception as e:
+        print("❌ Email error:", e)
+
+# ==============================
+# ML TRIAGE FUNCTION
+# ==============================
 def triage_patient(age, fever, sweating, cough, comorbidity):
     features = [[age, fever, sweating, cough, comorbidity]]
     return model.predict(features)[0]
 
+# ==============================
+# ROUTE
+# ==============================
 @app.route('/', methods=['GET', 'POST'])
 def index():
+
     filter_priority = request.args.get('filter_priority', 'ALL')
     search_name = request.args.get('search_name', '').lower()
 
     if request.method == 'POST':
 
-        # ✅ Notes update (handled separately)
+        # ======================
+        # UPDATE NOTES
+        # ======================
         if 'update_notes' in request.form:
             idx = int(request.form['patient_index'])
             patients[idx]['notes'] = request.form.get('notes', '')
-            return redirect(url_for('index', filter_priority=filter_priority, search_name=search_name))
+            return redirect(url_for('index',
+                                    filter_priority=filter_priority,
+                                    search_name=search_name))
 
-        # ✅ New patient
+        # ======================
+        # NEW PATIENT
+        # ======================
         name = request.form.get('name')
         age = int(request.form.get('age'))
 
@@ -45,7 +98,7 @@ def index():
 
         triage = triage_patient(age, fever, sweating, cough, comorbidity)
 
-        patients.append({
+        patient = {
             "name": name,
             "age": age,
             "fever": fever,
@@ -54,22 +107,31 @@ def index():
             "comorbidity": comorbidity,
             "triage": triage,
             "notes": ""
-        })
+        }
 
-        return redirect(url_for('index', filter_priority=filter_priority, search_name=search_name))
+        patients.append(patient)
 
-    # Prepare data
+        # ======================
+        # ALERT TRIGGER
+        # ======================
+        if triage == "RED":
+            send_email_alert(patient)
+
+        return redirect(url_for('index',
+                                filter_priority=filter_priority,
+                                search_name=search_name))
+
+    # ======================
+    # DISPLAY LOGIC
+    # ======================
     data = list(enumerate(patients))
 
-    # Filter
     if filter_priority != 'ALL':
         data = [p for p in data if p[1]['triage'] == filter_priority]
 
-    # Search
     if search_name:
         data = [p for p in data if search_name in p[1]['name'].lower()]
 
-    # Sort
     data = sorted(data, key=lambda x: priority_order[x[1]['triage']])
 
     # Counts
@@ -83,5 +145,8 @@ def index():
                            filter_priority=filter_priority,
                            search_name=search_name)
 
+# ==============================
+# RUN
+# ==============================
 if __name__ == "__main__":
     app.run(debug=True)
