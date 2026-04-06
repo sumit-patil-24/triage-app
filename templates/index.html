@@ -61,7 +61,14 @@
 
 <!-- Table -->
 <table class="table">
-<tr><th>Name</th><th>Age</th><th>Triage</th><th>Action</th></tr>
+<tr>
+    <th>Name</th>
+    <th>Age</th>
+    <th>Triage</th>
+    <th>Recommendation</th>  <!-- ✅ NEW -->
+    <th>Medicine Recommandation</th>
+</tr>
+
 
 {% for i,p in patients %}
 <tr class="{% if p.triage=='RED' %}highlight-red{% endif %}">
@@ -69,6 +76,10 @@
 <td>{{p.age}}</td>
 <td>{{p.triage}}</td>
 
+<!-- ✅ NEW COLUMN -->
+<td>{{p.action}}</td>
+
+<!-- Existing button -->
 <td>
 <button data-bs-toggle="modal" data-bs-target="#m{{i}}" class="btn btn-info btn-sm">View</button>
 </td>
@@ -81,6 +92,13 @@
 <form method="POST">
 <div class="modal-body">
 <p>{{p.name}}</p>
+
+<p><b>Recommended Medicines:</b></p>
+<ul>
+    {% for med in p.medicines %}
+        <li>{{ med }}</li>
+    {% endfor %}
+</ul>
 
 <textarea name="notes" class="form-control">{{p.notes}}</textarea>
 

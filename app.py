@@ -3,6 +3,10 @@ import joblib
 import os
 import smtplib
 from email.mime.text import MIMEText
+import json
+
+with open('medicines.json') as f:
+    med_data = json.load(f)
 
 app = Flask(__name__)
 
@@ -64,6 +68,31 @@ def triage_patient(age, fever, sweating, cough, comorbidity):
     features = [[age, fever, sweating, cough, comorbidity]]
     return model.predict(features)[0]
 
+def recommend_meds(patient):
+    meds = set()
+
+    if patient['fever'] == 1:
+        meds.update(med_data.get('fever', []))
+
+    if patient['cough'] == 1:
+        meds.update(med_data.get('cough', []))
+
+    if patient['sweating'] == 1:
+        meds.update(med_data.get('sweating', []))
+
+    if patient['comorbidity'] == 1:
+        meds.update(med_data.get('comorbidity', []))
+
+    return list(meds)
+
+def get_action(triage):
+    if triage == "RED":
+        return "Immediate hospital referral"
+    elif triage == "YELLOW":
+        return "Monitor closely"
+    else:
+        return "Home care"
+
 # ==============================
 # ROUTE
 # ==============================
@@ -97,6 +126,7 @@ def index():
         comorbidity = 1 if 'comorbidity' in request.form else 0
 
         triage = triage_patient(age, fever, sweating, cough, comorbidity)
+        action = get_action(triage)
 
         patient = {
             "name": name,
@@ -106,8 +136,11 @@ def index():
             "cough": cough,
             "comorbidity": comorbidity,
             "triage": triage,
+            "action": action,
             "notes": ""
         }
+
+        patient["medicines"] = recommend_meds(patient)
 
         patients.append(patient)
 

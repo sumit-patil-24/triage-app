@@ -1,0 +1,6 @@
+{
+  "fever": ["Paracetamol", "Ibuprofen"],
+  "cough": ["Dextromethorphan", "Cough Syrup"],
+  "sweating": ["Paracetamol"],
+  "comorbidity": ["Consult Doctor"]
+}
