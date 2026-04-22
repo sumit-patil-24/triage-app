@@ -1,6 +1,9 @@
 {
   "fever": ["Paracetamol", "Ibuprofen"],
-  "cough": ["Dextromethorphan", "Cough Syrup"],
+  "cough": ["Dextromethorphan"],
   "sweating": ["Paracetamol"],
+  "headache": ["Aspirin"],
+  "fatigue": ["Multivitamins"],
+  "breathing": ["Immediate Doctor Consultation"],
   "comorbidity": ["Consult Doctor"]
 }

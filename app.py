@@ -3,12 +3,72 @@ import joblib
 import os
 import smtplib
 from email.mime.text import MIMEText
+import sqlite3
+from flask import session
 import json
 
 with open('medicines.json') as f:
     med_data = json.load(f)
 
 app = Flask(__name__)
+
+app.secret_key = "supersecretkey"
+
+def init_db():
+    conn = sqlite3.connect('users.db')
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = sqlite3.connect('users.db')
+        cur = conn.cursor()
+        cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        conn.commit()
+        conn.close()
+
+        return redirect('/login')
+
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = sqlite3.connect('users.db')
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+        user = cur.fetchone()
+        conn.close()
+
+        if user:
+            session['user'] = username
+            return redirect('/')
+        else:
+            return "Invalid credentials"
+
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/login')
 
 # ==============================
 # LOAD ML MODEL
@@ -82,6 +142,15 @@ def recommend_meds(patient):
 
     if patient['comorbidity'] == 1:
         meds.update(med_data.get('comorbidity', []))
+    
+    if patient['headache'] == 1:
+        meds.update(med_data.get('headache', []))
+
+    if patient['fatigue'] == 1:
+        meds.update(med_data.get('fatigue', []))
+
+    if patient['breathing'] == 1:
+        meds.update(med_data.get('breathing', []))
 
     return list(meds)
 
@@ -98,6 +167,9 @@ def get_action(triage):
 # ==============================
 @app.route('/', methods=['GET', 'POST'])
 def index():
+
+    if 'user' not in session:
+     return redirect('/login')
 
     filter_priority = request.args.get('filter_priority', 'ALL')
     search_name = request.args.get('search_name', '').lower()
@@ -124,6 +196,9 @@ def index():
         sweating = 1 if 'sweating' in request.form else 0
         cough = 1 if 'cough' in request.form else 0
         comorbidity = 1 if 'comorbidity' in request.form else 0
+        headache = 1 if 'headache' in request.form else 0
+        fatigue = 1 if 'fatigue' in request.form else 0
+        breathing = 1 if 'breathing' in request.form else 0
 
         triage = triage_patient(age, fever, sweating, cough, comorbidity)
         action = get_action(triage)
@@ -137,7 +212,10 @@ def index():
             "comorbidity": comorbidity,
             "triage": triage,
             "action": action,
-            "notes": ""
+            "notes": "",
+            "headache": headache,
+            "fatigue": fatigue,
+            "breathing": breathing
         }
 
         patient["medicines"] = recommend_meds(patient)
