@@ -88,81 +88,83 @@
 
 <!-- TABLE -->
 <div class="card shadow">
-<table class="table table-hover">
-<thead class="table-dark">
-<tr>
-    <th>Name</th>
-    <th>Age</th>
-    <th>Triage</th>
-    <th>Action</th>
-    <th>Doctors</th>
-    <th>Details</th>
-</tr>
-</thead>
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Triage</th>
+                <th>Action</th>
+                <th>Doctors</th>
+                <th>Details</th>
+            </tr>
+        </thead>
 
-<tbody>
-{% for patient in patients %}
-<tr class="{% if patient.triage=='RED' %}table-danger{% endif %}">
-    <td>{{patient.name}}</td>
-    <td>{{patient.age}}</td>
-    <td>{{patient.triage}}</td>
-    <td>{{patient.action}}</td>
-    <td>
-        {% if patient.doctors %}
-            {{patient.doctors[0].name}} ({{patient.doctors[0].distance}} km)
-        {% endif %}
-    </td>
-    <td>
-        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#m{{loop.index}}">
-            View
-        </button>
-    </td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+        <tbody>
+            {% for patient in patients %}
+            <tr class="{% if patient.triage=='RED' %}table-danger{% endif %}">
+                <td>{{patient.name}}</td>
+                <td>{{patient.age}}</td>
+                <td>{{patient.triage}}</td>
+                <td>{{patient.action}}</td>
+                <td>
+                    {% if patient.doctors %}
+                    {{patient.doctors[0].name}} ({{patient.doctors[0].distance}} km)
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#m{{loop.index}}">
+                        View
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <!-- MODALS -->
 {% for patient in patients %}
 <div class="modal fade" id="m{{loop.index}}">
-<div class="modal-dialog">
-<div class="modal-content">
+    <div class="modal-dialog">
+        <div class="modal-content">
 
-<div class="modal-header bg-primary text-white">
-    <h5>{{patient.name}}</h5>
-    <button class="btn-close" data-bs-dismiss="modal"></button>
-</div>
+            <div class="modal-header bg-primary text-white">
+                <h5>{{patient.name}}</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
-<div class="modal-body">
-    <p><b>Age:</b> {{patient.age}}</p>
-    <p><b>Triage:</b> {{patient.triage}}</p>
-    <p><b>Action:</b> {{patient.action}}</p>
+            <div class="modal-body">
+                <p><b>Age:</b> {{patient.age}}</p>
+                <p><b>Triage:</b> {{patient.triage}}</p>
+                <p><b>Action:</b> {{patient.action}}</p>
 
-    <p><b>Medicines:</b></p>
-    <ul>
-        {% for med in patient.medicines %}
-        <li>{{med}}</li>
-        {% endfor %}
-    </ul>
+                <p><b>Medicines:</b></p>
+                <ul>
+                    {% for med in patient.medicines %}
+                    <li>{{med}}</li>
+                    {% endfor %}
+                </ul>
 
-    <p><b>Doctors:</b></p>
-    <ul>
-        {% for d in patient.doctors %}
-        <li>{{d.name}} - {{d.specialty}} ({{d.distance}} km)</li>
-        {% endfor %}
-    </ul>
+                <p><b>Doctors:</b></p>
+                <ul>
+                    {% for d in patient.doctors %}
+                    <li>{{d.name}} - {{d.specialty}} ({{d.distance}} km)</li>
+                    {% endfor %}
+                </ul>
 
-    <!-- SAVE NOTES -->
-    <form method="POST" action="/update_notes">
-        <textarea name="notes" class="form-control">{{patient.notes}}</textarea>
-        <input type="hidden" name="patient_idx" value="{{loop.index0}}">
-        <button class="btn btn-primary mt-2">Save Notes</button>
-    </form>
-</div>
+                <!-- SAVE NOTES -->
+                <form method="POST" action="/update_notes">
+                    <input type="hidden" name="patient_id" value="{{ patient.id }}">
+                    <textarea name="notes" class="form-control">{{ patient.notes }}</textarea>
+                    <button type="submit" class="btn btn-primary mt-2">
+                        Save Notes
+                    </button>
+                </form>
+            </div>
 
-</div>
-</div>
+        </div>
+    </div>
 </div>
 {% endfor %}
 
@@ -187,53 +189,53 @@
 {% block scripts %}
 
 <script>
-// AUTO GPS
-navigator.geolocation.getCurrentPosition(pos => {
-    document.getElementById('lat').value = pos.coords.latitude;
-    document.getElementById('lon').value = pos.coords.longitude;
-});
-
-// MAP
-var map = L.map('map').setView([18.5204, 73.8567], 12);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-const patients = {{patients|tojson}};
-
-patients.forEach(p => {
-
-    let color = p.triage === 'RED' ? 'red' :
-                p.triage === 'YELLOW' ? 'orange' : 'green';
-
-    let marker = L.circleMarker([p.lat, p.lon], {
-        radius: 8,
-        fillColor: color,
-        color: "#fff",
-        fillOpacity: 0.8
-    }).addTo(map);
-
-    marker.bindPopup(`${p.name} - ${p.triage}`);
-
-    // RED highlight
-    if (p.triage === 'RED') {
-        L.circle([p.lat, p.lon], {
-            color: 'red',
-            radius: 500
-        }).addTo(map);
-    }
-});
-
-// REAL-TIME EMERGENCY
-setInterval(()=>{
-    fetch('/emergency_patients')
-    .then(res=>res.json())
-    .then(data=>{
-        console.log("🚨 RED patients:", data);
+    // AUTO GPS
+    navigator.geolocation.getCurrentPosition(pos => {
+        document.getElementById('lat').value = pos.coords.latitude;
+        document.getElementById('lon').value = pos.coords.longitude;
     });
-},10000);
 
-// AUTO REFRESH
-setTimeout(()=>location.reload(),30000);
+    // MAP
+    var map = L.map('map').setView([18.5204, 73.8567], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const patients = {{ patients| tojson}};
+
+    patients.forEach(p => {
+
+        let color = p.triage === 'RED' ? 'red' :
+            p.triage === 'YELLOW' ? 'orange' : 'green';
+
+        let marker = L.circleMarker([p.lat, p.lon], {
+            radius: 8,
+            fillColor: color,
+            color: "#fff",
+            fillOpacity: 0.8
+        }).addTo(map);
+
+        marker.bindPopup(`${p.name} - ${p.triage}`);
+
+        // RED highlight
+        if (p.triage === 'RED') {
+            L.circle([p.lat, p.lon], {
+                color: 'red',
+                radius: 500
+            }).addTo(map);
+        }
+    });
+
+    // REAL-TIME EMERGENCY
+ //   setInterval(() => {
+ //       fetch('/emergency_patients')
+ //           .then(res => res.json())
+ //           .then(data => {
+ //               console.log("🚨 RED patients:", data);
+ //           });
+ //   }, 10000);
+
+    // AUTO REFRESH
+ //   setTimeout(() => location.reload(), 30000);
 
 </script>
 
