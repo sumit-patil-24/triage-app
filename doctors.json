@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Dr. Rahul Sharma",
+    "specialty": "Emergency Medicine",
+    "address": "Ruby Hall Clinic, Hinjewadi, Pune",
+    "lat": 18.5204,
+    "lon": 73.8567,
+    "phone": "+91-98765-43210"
+  },
+  {
+    "name": "Dr. Priya Patel",
+    "specialty": "General Physician", 
+    "address": "Jupiter Hospital, Baner, Pune",
+    "lat": 18.5314,
+    "lon": 73.8446,
+    "phone": "+91-98765-43211"
+  },
+  {
+    "name": "Dr. Amit Desai",
+    "specialty": "Pulmonology",
+    "address": "Sahyadri Hospital, Deccan Gymkhana",
+    "lat": 18.5169,
+    "lon": 73.8683,
+    "phone": "+91-98765-43212"
+  },
+  {
+    "name": "Dr. Neha Gupta",
+    "specialty": "Internal Medicine",
+    "address": "Noble Hospital, Hadapsar",
+    "lat": 18.5330,
+    "lon": 73.8522,
+    "phone": "+91-98765-43213"
+  }
+]
