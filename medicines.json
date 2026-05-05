@@ -1,9 +1,9 @@
 {
-  "fever": ["Paracetamol", "Ibuprofen"],
-  "cough": ["Dextromethorphan"],
-  "sweating": ["Paracetamol"],
-  "headache": ["Aspirin"],
-  "fatigue": ["Multivitamins"],
-  "breathing": ["Immediate Doctor Consultation"],
-  "comorbidity": ["Consult Doctor"]
+  "fever": ["Paracetamol 500mg", "Ibuprofen 400mg"],
+  "cough": ["Cough syrup (Dextromethorphan)", "Salbutamol inhaler"],
+  "sweating": ["Electrolyte solution (ORS)"],
+  "headache": ["Paracetamol 500mg", "Ibuprofen 400mg"],
+  "fatigue": ["Vitamin B complex", "Electrolyte drink"],
+  "breathing": ["Salbutamol inhaler", "Oxygen if available"],
+  "comorbidity": ["Consult specialist", "Continue regular meds"]
 }
